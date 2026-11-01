@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>水果消消乐</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%23ff4d7a'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: light; }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 22px 14px 36px;
+    color: #6d2948;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background-color: #fff6fb;
+    background-image:
+      radial-gradient(circle at 8% 10%, rgba(255, 214, 92, .95) 0, rgba(255, 214, 92, 0) 28%),
+      radial-gradient(circle at 94% 6%, rgba(255, 130, 170, .92) 0, rgba(255, 130, 170, 0) 32%),
+      radial-gradient(circle at 90% 88%, rgba(120, 220, 255, .9) 0, rgba(120, 220, 255, 0) 30%),
+      radial-gradient(circle at 4% 90%, rgba(150, 235, 160, .9) 0, rgba(150, 235, 160, 0) 28%);
+    background-attachment: fixed;
+  }
+
+  button { font-family: inherit; }
+
+  button:focus-visible {
+    outline: 3px solid #ffd166;
+    outline-offset: 3px;
+  }
+
+  ::selection { background: #ffd0e0; }
+
+  .app {
+    width: min(580px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .panel {
+    background: rgba(255, 255, 255, .88);
+    border-radius: 24px;
+    padding: 16px 16px 14px;
+    box-shadow: 0 12px 32px rgba(214, 80, 120, .14);
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.1;
+    letter-spacing: .04em;
+    color: #ff3d7a;
+  }
+
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    h1 {
+      background: linear-gradient(90deg, #ff8a00, #ff3d7a 55%, #7a5cff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+
+  .text-btn {
+    flex: 0 0 auto;
+    border: 0;
+    background: #fff0f5;
+    color: #ff3d7a;
+    font-weight: 800;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .text-btn:hover { background: #ffe0ea; }
+  .text-btn:active { transform: translateY(1px); }
+
+  .decor {
+    margin: 8px 0 0;
+    font-size: 20px;
+    letter-spacing: .28em;
+  }
+
+  .hint {
+    margin: 6px 0 0;
+    color: #8d3a56;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 0;
+    background: #fff;
+    border-radius: 18px;
+    padding: 10px 14px 8px;
+    box-shadow: inset 0 0 0 2px rgba(255, 170, 190, .35);
+  }
+
+  .score-stat { box-shadow: inset 0 0 0 2px rgba(255, 61, 122, .28); }
+  .moves-stat { box-shadow: inset 0 0 0 2px rgba(255, 150, 40, .4); }
+
+  .stat-label {
+    display: block;
+    color: #b15b78;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+
+  .stat-value {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 34px;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    transform-origin: left center;
+  }
+
+  .score-stat .stat-value { color: #ff3b6b; }
+  .moves-stat .stat-value { color: #ff8a00; }
+  .stat-value.low { color: #ff2d55; }
+
+  .stat-value.bump { animation: bump .25s ease; }
+
+  @keyframes bump {
+    50% { transform: scale(1.16); }
+  }
+
+  .board-wrap {
+    position: relative;
+    padding: 10px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, #ffe066, #ff7a59 34%, #ff4d8d 68%, #5ad7ff);
+    box-shadow: 0 18px 40px rgba(255, 90, 130, .28);
+  }
+
+  .board-wrap.shake {
+    animation: boardNudge .45s ease;
+  }
+
+  @keyframes boardNudge {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+  }
+
+  .board {
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px;
+    border-radius: 20px;
+    overflow: hidden;
+    touch-action: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .78), rgba(255, 255, 255, .5));
+    cursor: pointer;
+  }
+
+  /*
+   * 格子只做定位，不建立层叠上下文。水果用绝对定位脱离文档流，
+   * 选中放大时不会把这一行和下面的行撑高。
+   */
+  .cell {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 10px;
+    background: #fff7ea;
+  }
+
+  .cell.alt { background: #ffeef5; }
+
+  .cell.selected {
+    background: #ffe08a;
+    box-shadow: inset 0 0 0 3px #ff9f1c;
+  }
+
+  .cell.target {
+    background: #d9ffe9;
+    box-shadow: inset 0 0 0 3px #3dce7a;
+  }
+
+  .piece {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
+    line-height: 1;
+  }
+
+  .fruit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    font-size: var(--fruit, 24px);
+  }
+
+  .cell.selected .fruit { transform: scale(1.12); }
+
+  .fruit.pop {
+    z-index: 4;
+    animation-name: pop;
+    animation-timing-function: ease;
+    animation-fill-mode: forwards;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); opacity: 1; }
+    38% { transform: scale(1.42); opacity: 1; }
+    100% { transform: scale(.15); opacity: 0; }
+  }
+
+  .fruit.shake { animation: shake .28s ease; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-5px); }
+    70% { transform: translateX(5px); }
+  }
+
+  .fruit.deal {
+    animation-name: deal;
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(.2, .8, .2, 1);
+    animation-fill-mode: backwards;
+  }
+
+  @keyframes deal {
+    from { transform: scale(.25) rotate(-16deg); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .board.dragging,
+  .board.dragging .cell { cursor: grabbing; }
+
+  .floats {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .floater {
+    position: absolute;
+    z-index: 5;
+    text-align: center;
+    white-space: nowrap;
+    color: #ff3d68;
+    font-weight: 900;
+    text-shadow:
+      0 1px 0 #fff,
+      0 -1px 0 #fff,
+      1px 0 0 #fff,
+      -1px 0 0 #fff,
+      0 8px 16px rgba(255, 59, 107, .35);
+    animation: floatUp .85s ease-out forwards;
+  }
+
+  .floater b {
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  .floater small {
+    display: block;
+    margin-top: 2px;
+    color: #ff7a00;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, -40%) scale(.7); }
+    18% { opacity: 1; transform: translate(-50%, -70%) scale(1.12); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1); }
+  }
+
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 6;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #ff3b6b;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(255, 59, 107, .35);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(.92);
+    transition: .2s ease;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .rule {
+    margin: 0;
+    text-align: center;
+    color: #8d3a56;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(88, 24, 52, .38);
+    backdrop-filter: blur(6px);
+  }
+
+  .overlay[hidden] { display: none !important; }
+
+  .dialog {
+    width: min(340px, 100%);
+    padding: 28px 24px 22px;
+    border-radius: 28px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(120, 20, 60, .25);
+    animation: dialogIn .28s ease;
+  }
+
+  @keyframes dialogIn {
+    from { transform: scale(.92); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .dialog-mark {
+    font-size: 54px;
+    line-height: 1;
+  }
+
+  .dialog h2 {
+    margin: 8px 0 0;
+    color: #ff3d7a;
+    font-size: 28px;
+  }
+
+  .over-reason {
+    margin: 6px 0 0;
+    color: #8d3a56;
+    font-size: 14px;
+  }
+
+  .final-label {
+    margin: 16px 0 0;
+    color: #b15b78;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+
+  .final-score {
+    margin: 2px 0 0;
+    color: #ff8a00;
+    font-size: 56px;
+    line-height: 1;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .primary {
+    width: 100%;
+    margin-top: 18px;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 28px;
+    background: linear-gradient(90deg, #ff8a00, #ff3d7a);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 61, 122, .35);
+  }
+
+  .primary:hover { filter: brightness(1.05); }
+  .primary:active { transform: translateY(1px); }
+
+  .noscript {
+    margin: 0;
+    padding: 16px;
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 420px) {
+    h1 { font-size: 28px; }
+    .stat-value { font-size: 28px; }
+    .hint { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="panel">
+      <div class="title-row">
+        <h1>水果消消乐</h1>
+        <button type="button" id="btn-restart" class="text-btn">重新开始</button>
+      </div>
+      <p class="decor" aria-hidden="true">🍎🍇🍓🍊🍉🍒</p>
+      <p class="hint">点击或拖动，交换相邻水果。<br>三个及以上连成一线就会消除。</p>
+      <div class="stats">
+        <section class="stat score-stat" aria-label="当前得分">
+          <span class="stat-label">当前得分</span>
+          <strong id="score" class="stat-value">0</strong>
+        </section>
+        <section class="stat moves-stat" aria-label="剩余步数">
+          <span class="stat-label">剩余步数</span>
+          <strong id="moves" class="stat-value">30</strong>
+        </section>
+      </div>
+    </header>
+
+    <div class="board-wrap" id="board-wrap">
+      <div id="board" class="board" aria-label="游戏棋盘"></div>
+      <div id="floats" class="floats"></div>
+      <div id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true"></div>
+    </div>
+
+    <p class="rule">每个水果 10 分 · 4 连额外 40 分 · 5 连及以上额外 100 分 · 连锁按倍数加成。无效交换会弹回，不扣步数。</p>
+    <noscript><p class="noscript">请启用 JavaScript 后再玩。</p></noscript>
+  </div>
+
+  <div id="overlay" class="overlay" hidden aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="over-title">
+      <div class="dialog-mark" aria-hidden="true">🍉</div>
+      <h2 id="over-title">游戏结束</h2>
+      <p id="over-reason" class="over-reason"></p>
+      <p class="final-label">最终得分</p>
+      <p id="final-score" class="final-score">0</p>
+      <button type="button" id="btn-again" class="primary">再来一局</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  /*
+   * 规则：
+   * - 交换相邻水果，横或竖至少 3 个相同即消除。
+   * - 消除后上方水果下落，顶部补充新水果，可以连锁。
+   * - 只有形成消除的交换才消耗 1 步；无效交换会弹回。
+   * - 没有任何可消除的交换时，提示“没有可用步数”并自动洗牌。
+   * - 步数用完后结束。开局随机填充，但不会带着现成三连开始。
+   */
+
+  const ROWS = 10;
+  const COLS = 10;
+  const START_MOVES = 30;
+  const FRUITS = ['🍎', '🍇', '🍓', '🍊', '🍉', '🍒'];
+  const SCORE_FRUIT = 10;
+  const SCORE_FOUR = 40;
+  const SCORE_FIVE = 100;
+  const MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = {
+    swap: MOTION ? 0 : 180,
+    pop: MOTION ? 40 : 360,
+    fall: MOTION ? 0 : 320,
+    read: MOTION ? 450 : 780,
+    deal: MOTION ? 0 : 680,
+  };
+
+  const boardEl = document.getElementById('board');
+  const boardWrap = document.getElementById('board-wrap');
+  const floatsEl = document.getElementById('floats');
+  const toast = document.getElementById('toast');
+  const scoreEl = document.getElementById('score');
+  const movesEl = document.getElementById('moves');
+  const overlay = document.getElementById('overlay');
+  const finalScoreEl = document.getElementById('final-score');
+  const overReasonEl = document.getElementById('over-reason');
+
+  let board = [];
+  let score = 0;
+  let moves = START_MOVES;
+  let busy = false;
+  let gameOver = false;
+  let playId = 0;
+  let selected = null;
+  let drag = null;
+
+  function wait(ms) {
+    if (ms <= 0) return Promise.resolve();
+    return new Promise((resolve) => { setTimeout(resolve, ms); });
+  }
+
+  function randomFruit() {
+    return Math.floor(Math.random() * FRUITS.length);
+  }
+
+  function wouldMatch(bd, r, c, fruit) {
+    if (c >= 2 && bd[r][c - 1] === fruit && bd[r][c - 2] === fruit) return true;
+    if (r >= 2 && bd[r - 1][c] === fruit && bd[r - 2][c] === fruit) return true;
+    return false;
+  }
+
+  function findMatches(bd) {
+    const groups = [];
+    for (let r = 0; r < ROWS; r++) {
+      let c = 0;
+      while (c < COLS) {
+        const fruit = bd[r][c];
+        if (fruit == null) {
+          c += 1;
+          continue;
+        }
+        let end = c + 1;
+        while (end < COLS && bd[r][end] === fruit) end += 1;
+        if (end - c >= 3) {
+          const cells = [];
+          for (let k = c; k < end; k++) cells.push([r, k]);
+          groups.push(cells);
+        }
+        c = end;
+      }
+    }
+    for (let c = 0; c < COLS; c++) {
+      let r = 0;
+      while (r < ROWS) {
+        const fruit = bd[r][c];
+        if (fruit == null) {
+          r += 1;
+          continue;
+        }
+        let end = r + 1;
+        while (end < ROWS && bd[end][c] === fruit) end += 1;
+        if (end - r >= 3) {
+          const cells = [];
+          for (let k = r; k < end; k++) cells.push([k, c]);
+          groups.push(cells);
+        }
+        r = end;
+      }
+    }
+    return { groups };
+  }
+
+  function swapOn(bd, r1, c1, r2, c2) {
+    const tmp = bd[r1][c1];
+    bd[r1][c1] = bd[r2][c2];
+    bd[r2][c2] = tmp;
+  }
+
+  function lineHasMatch(bd, r, c) {
+    const fruit = bd[r][c];
+    if (fruit == null) return false;
+    let left = c;
+    while (left > 0 && bd[r][left - 1] === fruit) left -= 1;
+    let right = c;
+    while (right + 1 < COLS && bd[r][right + 1] === fruit) right += 1;
+    if (right - left + 1 >= 3) return true;
+    let up = r;
+    while (up > 0 && bd[up - 1][c] === fruit) up -= 1;
+    let down = r;
+    while (down + 1 < ROWS && bd[down + 1][c] === fruit) down += 1;
+    return down - up + 1 >= 3;
+  }
+
+  function swapWouldMatch(bd, r1, c1, r2, c2) {
+    swapOn(bd, r1, c1, r2, c2);
+    const ok = lineHasMatch(bd, r1, c1) || lineHasMatch(bd, r2, c2);
+    swapOn(bd, r1, c1, r2, c2);
+    return ok;
+  }
+
+  function hasPossibleMove(bd) {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (c + 1 < COLS && bd[r][c] !== bd[r][c + 1] && swapWouldMatch(bd, r, c, r, c + 1)) return true;
+        if (r + 1 < ROWS && bd[r][c] !== bd[r + 1][c] && swapWouldMatch(bd, r, c, r + 1, c)) return true;
+      }
+    }
+    return false;
+  }
+
+  function fillRandom() {
+    const bd = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const options = [];
+        for (let fruit = 0; fruit < FRUITS.length; fruit++) {
+          if (!wouldMatch(bd, r, c, fruit)) options.push(fruit);
+        }
+        bd[r][c] = options.length
+          ? options[Math.floor(Math.random() * options.length)]
+          : randomFruit();
+      }
+    }
+    return bd;
+  }
+
+  function generateBoard() {
+    let bd = fillRandom();
+    for (let attempt = 0; attempt < 200; attempt++) {
+      bd = fillRandom();
+      if (findMatches(bd).groups.length === 0 && hasPossibleMove(bd)) return bd;
+    }
+    return bd;
+  }
+
+  function countFruits(source) {
+    const counts = Array(FRUITS.length).fill(0);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) counts[source[r][c]] += 1;
+    }
+    return counts;
+  }
+
+  function placeFromCounts(base) {
+    const counts = base.slice();
+    const bd = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const options = [];
+        for (let fruit = 0; fruit < FRUITS.length; fruit++) {
+          if (counts[fruit] > 0 && !wouldMatch(bd, r, c, fruit)) options.push(fruit);
+        }
+        if (!options.length) return null;
+        const fruit = options[Math.floor(Math.random() * options.length)];
+        bd[r][c] = fruit;
+        counts[fruit] -= 1;
+      }
+    }
+    return bd;
+  }
+
+  function shuffleBoard(source) {
+    const base = countFruits(source);
+    for (let attempt = 0; attempt < 160; attempt++) {
+      const bd = placeFromCounts(base);
+      if (bd && findMatches(bd).groups.length === 0 && hasPossibleMove(bd)) return bd;
+    }
+    return null;
+  }
+
+  function makePlayable(source) {
+    if (source) {
+      const shuffled = shuffleBoard(source);
+      if (shuffled) return shuffled;
+    }
+    for (let i = 0; i < 20; i++) {
+      const bd = generateBoard();
+      if (findMatches(bd).groups.length === 0 && hasPossibleMove(bd)) return bd;
+    }
+    return generateBoard();
+  }
+
+  function applyGravity(bd) {
+    const motions = [];
+    for (let c = 0; c < COLS; c++) {
+      const stack = [];
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (bd[r][c] != null) stack.push({ fruit: bd[r][c], fromR: r });
+      }
+      const missing = ROWS - stack.length;
+      for (let i = 0; i < missing; i++) {
+        stack.push({ fruit: randomFruit(), fromR: -1 - i });
+      }
+      for (let r = ROWS - 1; r >= 0; r--) {
+        const item = stack[ROWS - 1 - r];
+        bd[r][c] = item.fruit;
+        motions.push({ r, c, dy: r - item.fromR });
+      }
+    }
+    return motions;
+  }
+
+  function award(groups, combo) {
+    const seen = new Set();
+    const labels = [];
+    for (const cells of groups) {
+      let base = 0;
+      for (const [r, c] of cells) {
+        const key = r + ',' + c;
+        if (!seen.has(key)) {
+          seen.add(key);
+          base += SCORE_FRUIT;
+        }
+      }
+      let bonus = 0;
+      if (cells.length === 4) bonus = SCORE_FOUR;
+      else if (cells.length >= 5) bonus = SCORE_FIVE;
+      labels.push({ cells, pts: (base + bonus) * combo, combo });
+    }
+    const total = labels.reduce((sum, label) => sum + label.pts, 0);
+    return { labels, total };
+  }
+
+  function isAdjacent(a, b) {
+    return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+  }
+
+  function formatScore(value) {
+    return value.toLocaleString('zh-CN');
+  }
+
+  function pulse(el) {
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    el.addEventListener('animationend', function handler(event) {
+      if (event.animationName !== 'bump') return;
+      el.classList.remove('bump');
+      el.removeEventListener('animationend', handler);
+    });
+  }
+
+  function updateHUD(scorePulse, movesPulse) {
+    scoreEl.textContent = formatScore(score);
+    movesEl.textContent = String(moves);
+    movesEl.classList.toggle('low', moves <= 5);
+    if (scorePulse) pulse(scoreEl);
+    if (movesPulse) pulse(movesEl);
+  }
+
+  function setBusy(value) {
+    busy = value;
+    boardEl.classList.toggle('is-busy', busy);
+  }
+
+  function cellAt(r, c) {
+    return boardEl.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+  }
+
+  function piece(r, c) {
+    const cell = cellAt(r, c);
+    return cell ? cell.querySelector('.fruit') : null;
+  }
+
+  function createCell(r, c) {
+    const fruitIndex = board[r][c];
+    const cell = document.createElement('div');
+    cell.className = 'cell' + ((r + c) % 2 ? ' alt' : '');
+    if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
+    cell.dataset.r = String(r);
+    cell.dataset.c = String(c);
+    cell.dataset.fruit = String(fruitIndex);
+    const fruit = document.createElement('div');
+    fruit.className = 'piece fruit';
+    fruit.textContent = fruitIndex == null ? '' : FRUITS[fruitIndex];
+    cell.appendChild(fruit);
+    return cell;
+  }
+
+  function syncFruitSize() {
+    const cell = boardEl.querySelector('.cell');
+    if (!cell) return;
+    const size = cell.getBoundingClientRect().width;
+    if (!size) return;
+    const next = (size * 0.7).toFixed(2) + 'px';
+    if (boardEl.style.getPropertyValue('--fruit') !== next) {
+      boardEl.style.setProperty('--fruit', next);
+    }
+  }
+
+  function renderBoard() {
+    const frag = document.createDocumentFragment();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) frag.appendChild(createCell(r, c));
+    }
+    boardEl.replaceChildren(frag);
+    syncFruitSize();
+  }
+
+  function clearSelection() {
+    selected = null;
+    boardEl.querySelectorAll('.cell.selected').forEach((el) => el.classList.remove('selected'));
+  }
+
+  function setSelection(pos) {
+    clearSelection();
+    selected = { r: pos.r, c: pos.c };
+    const cell = cellAt(pos.r, pos.c);
+    if (cell) cell.classList.add('selected');
+  }
+
+  function clearHints() {
+    boardEl.querySelectorAll('.cell.target').forEach((el) => el.classList.remove('target'));
+  }
+
+  function paintPressed(pos) {
+    boardEl.querySelectorAll('.cell.selected').forEach((el) => el.classList.remove('selected'));
+    const cell = pos.el || cellAt(pos.r, pos.c);
+    if (cell) cell.classList.add('selected');
+  }
+
+  function restoreSelection() {
+    boardEl.querySelectorAll('.cell.selected').forEach((el) => el.classList.remove('selected'));
+    if (!selected) return;
+    const cell = cellAt(selected.r, selected.c);
+    if (cell) cell.classList.add('selected');
+  }
+
+  function readCell(target) {
+    if (!target || !target.closest) return null;
+    const cell = target.closest('.cell');
+    if (!cell || !boardEl.contains(cell)) return null;
+    return { r: Number(cell.dataset.r), c: Number(cell.dataset.c), el: cell };
+  }
+
+  function onDealEnd(event) {
+    if (event.animationName !== 'deal') return;
+    const fruit = event.currentTarget;
+    fruit.classList.remove('deal');
+    fruit.style.animationDelay = '';
+    fruit.removeEventListener('animationend', onDealEnd);
+  }
+
+  function playDeal() {
+    if (MOTION) return;
+    boardEl.querySelectorAll('.fruit').forEach((fruit) => {
+      const cell = fruit.parentElement;
+      const delay = (Number(cell.dataset.r) + Number(cell.dataset.c)) * 14;
+      fruit.classList.add('deal');
+      fruit.style.animationDelay = delay + 'ms';
+      fruit.addEventListener('animationend', onDealEnd);
+    });
+  }
+
+  function shake(r, c) {
+    const fruit = piece(r, c);
+    if (!fruit) return;
+    fruit.classList.remove('deal', 'shake');
+    fruit.style.animationDelay = '';
+    void fruit.offsetWidth;
+    fruit.classList.add('shake');
+    fruit.addEventListener('animationend', (event) => {
+      if (event.animationName !== 'shake') return;
+      fruit.classList.remove('shake');
+    }, { once: true });
+  }
+
+  function hideToast() {
+    toast.classList.remove('show');
+    toast.textContent = '';
+    toast.setAttribute('aria-hidden', 'true');
+    boardWrap.classList.remove('shake');
+  }
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.setAttribute('aria-hidden', 'false');
+    toast.classList.add('show');
+    if (!MOTION) boardWrap.classList.add('shake');
+  }
+
+  function rowStride() {
+    const top = cellAt(0, 0);
+    const below = cellAt(1, 0);
+    if (!top || !below) return 0;
+    return below.getBoundingClientRect().top - top.getBoundingClientRect().top;
+  }
+
+  function axis() {
+    const origin = cellAt(0, 0).getBoundingClientRect();
+    const right = cellAt(0, 1).getBoundingClientRect();
+    const below = cellAt(1, 0).getBoundingClientRect();
+    return { x: right.left - origin.left, y: below.top - origin.top };
+  }
+
+  async function animateSwap(a, b) {
+    const fruitA = piece(a.r, a.c);
+    const fruitB = piece(b.r, b.c);
+    if (!fruitA || !fruitB || T.swap <= 0) return;
+    const delta = axis();
+    const dx = (b.c - a.c) * delta.x;
+    const dy = (b.r - a.r) * delta.y;
+    [fruitA, fruitB].forEach((fruit) => {
+      fruit.classList.remove('deal', 'shake');
+      fruit.style.animation = 'none';
+      fruit.style.transition = 'none';
+      fruit.style.transform = 'translate(0px, 0px)';
+      fruit.style.zIndex = '3';
+    });
+    fruitA.style.zIndex = '4';
+    void fruitA.offsetWidth;
+    const timing = 'transform ' + T.swap + 'ms ease';
+    fruitA.style.transition = timing;
+    fruitB.style.transition = timing;
+    fruitA.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+    fruitB.style.transform = 'translate(' + (-dx) + 'px, ' + (-dy) + 'px)';
+    await wait(T.swap);
+  }
+
+  async function animateSwapBack(a, b) {
+    const fruitA = piece(a.r, a.c);
+    const fruitB = piece(b.r, b.c);
+    if (!fruitA || !fruitB || T.swap <= 0) return;
+    fruitA.style.transform = 'translate(0px, 0px)';
+    fruitB.style.transform = 'translate(0px, 0px)';
+    await wait(T.swap);
+    [fruitA, fruitB].forEach((fruit) => {
+      fruit.style.transition = '';
+      fruit.style.transform = '';
+      fruit.style.animation = '';
+      fruit.style.zIndex = '';
+    });
+  }
+
+  function spawnFloater(cells, pts, combo) {
+    const wrap = boardWrap.getBoundingClientRect();
+    let x = 0;
+    let y = 0;
+    for (const [r, c] of cells) {
+      const rect = cellAt(r, c).getBoundingClientRect();
+      x += rect.left + rect.width / 2;
+      y += rect.top + rect.height / 2;
+    }
+    x /= cells.length;
+    y /= cells.length;
+    const floater = document.createElement('div');
+    floater.className = 'floater';
+    floater.style.left = (x - wrap.left) + 'px';
+    floater.style.top = (y - wrap.top) + 'px';
+    const strong = document.createElement('b');
+    strong.textContent = '+' + pts;
+    floater.appendChild(strong);
+    if (combo > 1) {
+      const small = document.createElement('small');
+      small.textContent = '连击 ×' + combo;
+      floater.appendChild(small);
+    }
+    floatsEl.appendChild(floater);
+    setTimeout(() => floater.remove(), 900);
+  }
+
+  function paintPop(labels) {
+    const seen = new Set();
+    for (const label of labels) {
+      for (const [r, c] of label.cells) {
+        const key = r + ',' + c;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const fruit = piece(r, c);
+        if (!fruit) continue;
+        fruit.classList.remove('deal', 'shake');
+        fruit.style.animation = '';
+        fruit.classList.add('pop');
+        fruit.style.animationDuration = T.pop + 'ms';
+      }
+      spawnFloater(label.cells, label.pts, label.combo);
+    }
+  }
+
+  function clearMatched(groups) {
+    const seen = new Set();
+    for (const cells of groups) {
+      for (const [r, c] of cells) {
+        const key = r + ',' + c;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        board[r][c] = null;
+      }
+    }
+  }
+
+  async function animateFalls(motions) {
+    if (T.fall <= 0) return;
+    const stride = rowStride();
+    if (!stride) return;
+    const nodes = [];
+    for (const motion of motions) {
+      if (motion.dy <= 0) continue;
+      const fruit = piece(motion.r, motion.c);
+      if (!fruit) continue;
+      fruit.style.transition = 'none';
+      fruit.style.transform = 'translateY(' + (-motion.dy * stride) + 'px)';
+      nodes.push(fruit);
+    }
+    if (!nodes.length) return;
+    boardEl.offsetHeight;
+    for (const fruit of nodes) {
+      fruit.style.transition = 'transform ' + T.fall + 'ms cubic-bezier(.18,.8,.2,1)';
+      fruit.style.transform = 'translateY(0px)';
+    }
+    await wait(T.fall);
+    for (const fruit of nodes) {
+      fruit.style.transition = '';
+      fruit.style.transform = '';
+    }
+  }
+
+  function showGameOver() {
+    gameOver = true;
+    overReasonEl.textContent = START_MOVES + ' 步已用完';
+    finalScoreEl.textContent = formatScore(score);
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    document.getElementById('btn-again').focus();
+  }
+
+  async function noMovesReshuffle(id) {
+    showToast('没有可用步数');
+    await wait(T.read);
+    if (playId !== id) {
+      hideToast();
+      return;
+    }
+    boardWrap.classList.remove('shake');
+    board = makePlayable(board);
+    renderBoard();
+    playDeal();
+    await wait(T.deal);
+    if (playId !== id) {
+      hideToast();
+      return;
+    }
+    hideToast();
+  }
+
+  async function resolveMatches(id) {
+    let combo = 1;
+    while (playId === id) {
+      const { groups } = findMatches(board);
+      if (!groups.length) break;
+      const result = award(groups, combo);
+      score += result.total;
+      updateHUD(true, false);
+      paintPop(result.labels);
+      await wait(T.pop);
+      if (playId !== id) return;
+      clearMatched(groups);
+      const motions = applyGravity(board);
+      renderBoard();
+      await animateFalls(motions);
+      if (playId !== id) return;
+      combo += 1;
+    }
+    if (playId !== id) return;
+    if (moves <= 0) {
+      showGameOver();
+      return;
+    }
+    if (!hasPossibleMove(board)) await noMovesReshuffle(id);
+  }
+
+  async function doSwap(a, b) {
+    if (busy || gameOver) return;
+    if (!isAdjacent(a, b)) return;
+    const id = playId;
+    if (board[a.r][a.c] === board[b.r][b.c]) {
+      shake(a.r, a.c);
+      shake(b.r, b.c);
+      return;
+    }
+    setBusy(true);
+    clearSelection();
+    try {
+      await animateSwap(a, b);
+      if (playId !== id) return;
+      swapOn(board, a.r, a.c, b.r, b.c);
+      const matched = findMatches(board).groups.length > 0;
+      if (!matched) {
+        swapOn(board, a.r, a.c, b.r, b.c);
+        await animateSwapBack(a, b);
+        return;
+      }
+      moves -= 1;
+      updateHUD(false, true);
+      renderBoard();
+      await resolveMatches(id);
+    } finally {
+      if (playId === id) setBusy(false);
+    }
+  }
+
+  function handleTap(pos) {
+    if (busy || gameOver) return;
+    if (!selected) {
+      setSelection(pos);
+      return;
+    }
+    if (selected.r === pos.r && selected.c === pos.c) {
+      clearSelection();
+      return;
+    }
+    if (isAdjacent(selected, pos)) {
+      const origin = { r: selected.r, c: selected.c };
+      clearSelection();
+      doSwap(origin, pos);
+      return;
+    }
+    setSelection(pos);
+  }
+
+  function onPointerDown(event) {
+    if (!event.isPrimary || event.button !== 0) return;
+    if (busy || gameOver) return;
+    const pos = readCell(event.target);
+    if (!pos) return;
+    event.preventDefault();
+    try { boardEl.setPointerCapture(event.pointerId); } catch (err) { /* 指针可能已经结束 */ }
+    drag = {
+      id: event.pointerId,
+      r: pos.r,
+      c: pos.c,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+    };
+    paintPressed(pos);
+  }
+
+  function onPointerMove(event) {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 12) {
+      drag.moved = true;
+      boardEl.classList.add('dragging');
+    }
+    clearHints();
+    if (!drag.moved) return;
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const pos = hit ? readCell(hit) : null;
+    if (pos && isAdjacent(drag, pos)) pos.el.classList.add('target');
+  }
+
+  function finishDrag() {
+    drag = null;
+    boardEl.classList.remove('dragging');
+    clearHints();
+    restoreSelection();
+  }
+
+  function onPointerUp(event) {
+    if (!drag || event.pointerId !== drag.id) return;
+    const start = drag;
+    finishDrag();
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const pos = hit ? readCell(hit) : null;
+    if (start.moved && pos && isAdjacent(start, pos)) {
+      clearSelection();
+      doSwap(start, pos);
+      return;
+    }
+    if (!start.moved) handleTap(start);
+  }
+
+  function onPointerCancel(event) {
+    if (!drag || event.pointerId !== drag.id) return;
+    finishDrag();
+  }
+
+  function startGame() {
+    playId += 1;
+    score = 0;
+    moves = START_MOVES;
+    gameOver = false;
+    selected = null;
+    drag = null;
+    boardEl.classList.remove('dragging');
+    board = makePlayable(null);
+    floatsEl.replaceChildren();
+    hideToast();
+    overlay.hidden = true;
+    overlay.setAttribute('aria-hidden', 'true');
+    updateHUD(false, false);
+    renderBoard();
+    playDeal();
+    setBusy(false);
+    if (!hasPossibleMove(board) || findMatches(board).groups.length > 0) {
+      const id = playId;
+      setBusy(true);
+      noMovesReshuffle(id).finally(() => {
+        if (playId === id) setBusy(false);
+      });
+    }
+  }
+
+  document.getElementById('btn-restart').addEventListener('click', startGame);
+  document.getElementById('btn-again').addEventListener('click', startGame);
+  boardEl.addEventListener('pointerdown', onPointerDown, { passive: false });
+  boardEl.addEventListener('pointermove', onPointerMove);
+  boardEl.addEventListener('pointerup', onPointerUp);
+  boardEl.addEventListener('pointercancel', onPointerCancel);
+  boardEl.addEventListener('contextmenu', (event) => event.preventDefault());
+  window.addEventListener('resize', syncFruitSize);
+
+  startGame();
+})();
+</script>
+</body>
+</html>

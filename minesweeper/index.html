@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫雷 Minesweeper</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body data-theme="ocean">
+<div class="game-wrapper">
+  <div class="settings">
+    <div class="menu">
+      <button type="button" class="menu-btn" aria-expanded="false" aria-haspopup="menu">难度</button>
+      <div class="menu-list" hidden role="menu">
+        <button type="button" role="menuitem" data-difficulty="beginner">初级 (9×9, 10雷)</button>
+        <button type="button" role="menuitem" data-difficulty="intermediate">中级 (16×16, 40雷)</button>
+        <button type="button" role="menuitem" data-difficulty="expert">高级 (30×16, 99雷)</button>
+        <button type="button" role="menuitem" data-difficulty="custom" id="customMenuItem">自定义</button>
+      </div>
+    </div>
+    <div class="menu">
+      <button type="button" class="menu-btn" aria-expanded="false" aria-haspopup="menu">外观</button>
+      <div class="menu-list" hidden role="menu">
+        <button type="button" role="menuitem" data-theme-option="classic">经典</button>
+        <button type="button" role="menuitem" data-theme-option="night">夜色</button>
+        <button type="button" role="menuitem" data-theme-option="ocean">海洋</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <span class="best-label" id="bestLabel">最快 —</span>
+      <button type="button" class="bevel-btn" id="resetRecordBtn">重置纪录</button>
+      <button type="button" class="bevel-btn cheat-btn" id="cheatBtn" aria-pressed="false">作弊模式</button>
+    </div>
+  </div>
+  <div class="header">
+    <div class="counter" id="mineCounter">010</div>
+    <button type="button" class="face-btn" id="faceBtn">🙂</button>
+    <div class="counter" id="timer">000</div>
+  </div>
+  <div class="board-wrap" id="boardWrap">
+    <div class="board" id="board"></div>
+    <canvas id="fxCanvas"></canvas>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="customModal" hidden>
+  <form class="modal" id="customForm">
+    <h2>自定义</h2>
+    <label>宽度<input id="customCols" type="number" min="9" max="30" required></label>
+    <label>高度<input id="customRows" type="number" min="9" max="24" required></label>
+    <label>雷数<input id="customMines" type="number" min="10" required></label>
+    <p class="modal-hint">宽度 9–30，高度 9–24。雷数从 10 起，并给第一次点击留下周围空位。</p>
+    <p class="modal-error" id="customError"></p>
+    <div class="modal-actions">
+      <button type="button" class="bevel-btn" id="customCancel">取消</button>
+      <button type="submit" class="bevel-btn">确定</button>
+    </div>
+  </form>
+</div>
+
+<div class="result-backdrop" id="resultModal" hidden>
+  <div class="result-card" role="dialog" aria-labelledby="resultLevel">
+    <button type="button" class="result-close" id="resultClose" aria-label="关闭">×</button>
+    <div class="result-face result-pop-item" aria-hidden="true">
+      <svg viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="28" fill="none" stroke="currentColor" stroke-width="3"/>
+        <circle cx="30" cy="34" r="3" fill="currentColor"/>
+        <circle cx="50" cy="34" r="3" fill="currentColor"/>
+        <path id="resultMouth" d="M28 54 Q40 44 52 54" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="result-level result-pop-item" id="resultLevel">中级</div>
+    <div class="result-time result-pop-item" id="resultTime">00:00.000</div>
+    <div class="result-progress result-pop-item" id="resultProgress">游戏进度：0.00%</div>
+    <div class="result-record result-pop-item" id="resultRecord">历史记录 —</div>
+    <div class="result-stats result-pop-item" id="resultStats"></div>
+    <div class="result-actions result-pop-item">
+      <button type="button" class="icon-btn" id="resultStay" aria-label="留在棋盘">
+        <svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M7 10.5V19h10v-8.5"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="resultRestart" aria-label="再来一局">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.2-5.5"/><path d="M20 4v5h-5"/></svg>
+      </button>
+    </div>
+    <button type="button" class="result-reset result-pop-item" id="resultReset">重置纪录</button>
+  </div>
+</div>
+
+<script src="js/records.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+<script src="js/input.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
