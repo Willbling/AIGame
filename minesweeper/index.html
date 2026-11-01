@@ -31,6 +31,7 @@
       <span class="best-label" id="bestLabel">最快 —</span>
       <button type="button" class="bevel-btn" id="resetRecordBtn">重置纪录</button>
       <button type="button" class="bevel-btn cheat-btn" id="cheatBtn" aria-pressed="false">作弊模式</button>
+      <button type="button" class="bevel-btn sound-btn is-on" id="soundBtn" aria-pressed="true">声音</button>
     </div>
   </div>
   <div class="header">
@@ -42,6 +43,7 @@
     <div class="board" id="board"></div>
     <canvas id="fxCanvas"></canvas>
   </div>
+  <p class="cheat-note" id="cheatNote" hidden>已开启作弊，不计入成绩</p>
 </div>
 
 <div class="modal-backdrop" id="customModal" hidden>
@@ -88,6 +90,7 @@
 </div>
 
 <script src="js/records.js"></script>
+<script src="js/sound.js"></script>
 <script src="js/effects.js"></script>
 <script src="js/render.js"></script>
 <script src="js/game.js"></script>

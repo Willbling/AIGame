@@ -56,7 +56,6 @@ MS.game = {
     state.clicks = 0;
     state.cheatEver = state.cheat;
     this.stopTimer();
-    document.getElementById('faceBtn').textContent = '🙂';
     this.paintMines();
     MS.ui.paintTimer();
     MS.ui.hideResult();
@@ -172,8 +171,15 @@ MS.game = {
     state.clicks++;
     const el = MS.render.cellElAt(r, c);
     this.reveal(r, c);
-    if (cell._mineHit) MS.effects.burst(el, 'explode');
-    else MS.effects.burst(el, 'splash');
+    if (cell._mineHit) {
+      MS.effects.burst(el, 'explode');
+      MS.sound.play('explode');
+    } else if (!state.gameWon) {
+      MS.effects.burst(el, 'splash');
+      MS.sound.play(cell.adjacent === 0 ? 'open' : 'reveal');
+    } else {
+      MS.effects.burst(el, 'splash');
+    }
   },
 
   reveal(r, c) {
@@ -214,7 +220,10 @@ MS.game = {
       state.flagsPlaced--;
     } else {
       cell.question = false;
+      MS.sound.play('unmark');
     }
+    if (cell.flagged) MS.sound.play('flag');
+    else if (cell.question) MS.sound.play('question');
     this.paintMines();
     MS.render.refreshBoard();
   },
@@ -248,6 +257,7 @@ MS.game = {
       }
     });
     if (hitMine) {
+      MS.sound.play('explode');
       if (state.cheatEver) {
         MS.render.refreshBoard();
         return;
@@ -255,6 +265,7 @@ MS.game = {
       this.triggerGameOver(r, c);
       return;
     }
+    if (!state.gameWon) MS.sound.play('chord');
     MS.render.refreshBoard();
   },
 
@@ -264,7 +275,7 @@ MS.game = {
     state.gameWon = false;
     state.gameOver = true;
     this.stopTimer();
-    document.getElementById('faceBtn').textContent = '😵';
+    MS.ui.paintFace();
     const ocean = state.theme === 'ocean';
     for (let r = 0; r < state.rows; r++) {
       for (let c = 0; c < state.cols; c++) {
@@ -274,6 +285,7 @@ MS.game = {
       }
     }
     MS.render.refreshBoard();
+    MS.sound.play('lose');
     MS.ui.showResult('lose');
   },
 
@@ -288,7 +300,7 @@ MS.game = {
     }
     state.gameWon = true;
     this.stopTimer();
-    document.getElementById('faceBtn').textContent = '😎';
+    MS.ui.paintFace();
     this.paintMines();
     for (let r = 0; r < state.rows; r++) {
       for (let c = 0; c < state.cols; c++) {
@@ -301,6 +313,7 @@ MS.game = {
     }
     state.flagsPlaced = state.totalMines;
     MS.render.refreshBoard();
+    MS.sound.play('win');
     MS.ui.showResult('win');
   },
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>水果消消乐</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%23ff4d7a'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23218a3a' d='M6 24c2 18 12 30 26 30s24-12 26-30z'/%3E%3Cpath fill='%23f3fad8' d='M10 24c2 14 10 24 22 24s20-10 22-24z'/%3E%3Cpath fill='%23ff4b6e' d='M14 24c2 11 8 19 18 19s16-8 18-19z'/%3E%3Cellipse fill='%232a211c' cx='26' cy='34' rx='2' ry='2.6' transform='rotate(20 26 34)'/%3E%3Cellipse fill='%232a211c' cx='36' cy='32' rx='2' ry='2.6' transform='rotate(-15 36 32)'/%3E%3Cellipse fill='%232a211c' cx='32' cy='38' rx='1.7' ry='2.3' transform='rotate(8 32 38)'/%3E%3C/svg%3E">
 <style>
   :root { color-scheme: light; }
 
@@ -39,6 +39,92 @@
 
   ::selection { background: #ffd0e0; }
 
+  .stage {
+    width: min(920px, 100%);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .feed {
+    width: 236px;
+    flex: 0 0 236px;
+    position: sticky;
+    top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 44px);
+    padding: 14px 12px 12px;
+  }
+
+  .feed h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.2;
+    color: #ff3d7a;
+  }
+
+  .feed-empty {
+    margin: 0;
+    color: #b15b78;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .feed-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    max-height: calc(100vh - 120px);
+  }
+
+  .feed-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    align-items: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 8px 10px;
+    box-shadow: inset 0 0 0 2px rgba(255, 170, 190, .35);
+    animation: feedIn .28s ease;
+  }
+
+  .feed-card {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .feed-meta {
+    grid-column: 1;
+    grid-row: 2;
+    color: #8d3a56;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .feed-item b {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: #ff8a00;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @keyframes feedIn {
+    from { transform: translateY(-8px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
   .app {
     width: min(580px, 100%);
     display: flex;
@@ -59,6 +145,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 12px;
   }
 
@@ -78,6 +165,21 @@
       color: transparent;
     }
   }
+
+  .title-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .sound-btn.is-off {
+    background: #f4f4f4;
+    color: #9a8b92;
+  }
+
+  .sound-btn.is-off:hover { background: #ececec; }
 
   .text-btn {
     flex: 0 0 auto;
@@ -200,7 +302,14 @@
     background: #fff7ea;
   }
 
-  .cell.alt { background: #ffeef5; }
+  .cell[data-fruit="0"] { background: #ffe8e4; }
+  .cell[data-fruit="1"] { background: #f0e6ff; }
+  .cell[data-fruit="2"] { background: #ffe3ee; }
+  .cell[data-fruit="3"] { background: #fff0d6; }
+  .cell[data-fruit="4"] { background: #e3f8e6; }
+  .cell[data-fruit="5"] { background: #ffdfe6; }
+  .cell.bomb { background: #fff3c4; }
+  .cell.cart { background: #e5f0ff; }
 
   .cell.selected {
     background: #ffe08a;
@@ -227,6 +336,15 @@
     min-width: 0;
     min-height: 0;
     font-size: var(--fruit, 24px);
+  }
+
+  .fruit .badge {
+    position: absolute;
+    right: 1px;
+    bottom: 0;
+    font-size: .42em;
+    line-height: 1;
+    pointer-events: none;
   }
 
   .cell.selected .fruit { transform: scale(1.12); }
@@ -419,8 +537,63 @@
     box-shadow: 0 8px 20px rgba(255, 61, 122, .35);
   }
 
+  .set-note {
+    margin: 12px 0 0;
+    color: #8d3a56;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .settings-form { text-align: left; }
+
+  .settings-form h2 { text-align: center; }
+
+  .settings-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+    color: #8d3a56;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .settings-form input {
+    font: inherit;
+    font-size: 18px;
+    padding: 8px 10px;
+    border: 2px solid #ffd0e0;
+    border-radius: 12px;
+    color: #6d2948;
+  }
+
+  .set-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .set-actions .primary { margin-top: 16px; }
+
+  .set-actions .text-btn {
+    margin-top: 16px;
+    padding: 12px 16px;
+  }
+
+  .set-actions .primary,
+  .set-actions .text-btn { flex: 1; }
+
+  .settings { z-index: 40; }
+
   .primary:hover { filter: brightness(1.05); }
   .primary:active { transform: translateY(1px); }
+
+  .over-custom {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 16px;
+  }
 
   .noscript {
     margin: 0;
@@ -438,6 +611,18 @@
     }
   }
 
+  @media (max-width: 860px) {
+    .stage { flex-direction: column; }
+    .feed {
+      order: 2;
+      width: 100%;
+      flex-basis: auto;
+      position: static;
+      max-height: none;
+    }
+    .feed-list { max-height: 180px; }
+  }
+
   @media (max-width: 420px) {
     h1 { font-size: 28px; }
     .stat-value { font-size: 28px; }
@@ -446,11 +631,21 @@
 </style>
 </head>
 <body>
-  <div class="app">
+  <div class="stage">
+    <aside class="feed panel" aria-label="得分播报">
+      <h2>实时播报</h2>
+      <p class="feed-empty" id="feed-empty">还没有得分</p>
+      <ol class="feed-list" id="feed-list" aria-live="polite"></ol>
+    </aside>
+    <div class="app">
     <header class="panel">
       <div class="title-row">
         <h1>水果消消乐</h1>
-        <button type="button" id="btn-restart" class="text-btn">重新开始</button>
+        <div class="title-actions">
+          <button type="button" id="btn-sound" class="text-btn sound-btn" aria-pressed="true">声音开</button>
+          <button type="button" id="btn-custom" class="text-btn">自定义</button>
+          <button type="button" id="btn-restart" class="text-btn">重新开始</button>
+        </div>
       </div>
       <p class="decor" aria-hidden="true">🍎🍇🍓🍊🍉🍒</p>
       <p class="hint">点击或拖动，交换相邻水果。<br>三个及以上连成一线就会消除。</p>
@@ -472,8 +667,29 @@
       <div id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true"></div>
     </div>
 
-    <p class="rule">每个水果 10 分 · 4 连额外 40 分 · 5 连及以上额外 100 分 · 连锁按倍数加成。无效交换会弹回，不扣步数。</p>
+    <p class="rule">每个水果 10 分 · 4 连额外 40 分 · 5 连及以上额外 100 分 · 连锁按倍数加成。无效交换会弹回，不扣步数。旁边的水果被消除时，💣炸掉 5×5，🛒清掉同种水果。</p>
     <noscript><p class="noscript">请启用 JavaScript 后再玩。</p></noscript>
+  </div>
+  </div>
+
+  <div id="settings" class="overlay settings" hidden aria-hidden="true">
+    <form class="dialog settings-form" id="settings-form">
+      <h2>自定义</h2>
+      <label>剩余步数
+        <input id="set-moves" type="number" min="1" max="999" step="1" required>
+      </label>
+      <label>炸弹出现概率（%）
+        <input id="set-bomb" type="number" min="0" max="100" step="0.1" required>
+      </label>
+      <label>购物车出现概率（%）
+        <input id="set-cart" type="number" min="0" max="100" step="0.1" required>
+      </label>
+      <p class="set-note">概率只影响之后新出现的格子。旁边的水果被消除时，炸弹炸掉以自己为中心的 5×5；购物车清掉角标上的水果，以及旁边刚被消掉的种类。</p>
+      <div class="set-actions">
+        <button type="button" id="set-cancel" class="text-btn">取消</button>
+        <button type="submit" class="primary">确定</button>
+      </div>
+    </form>
   </div>
 
   <div id="overlay" class="overlay" hidden aria-hidden="true">
@@ -484,6 +700,8 @@
       <p class="final-label">最终得分</p>
       <p id="final-score" class="final-score">0</p>
       <button type="button" id="btn-again" class="primary">再来一局</button>
+      <button type="button" id="btn-custom-over" class="text-btn over-custom">自定义</button>
+      <button type="button" id="btn-sound-over" class="text-btn sound-btn over-custom" aria-pressed="true">声音开</button>
     </div>
   </div>
 
@@ -497,6 +715,7 @@
    * - 消除后上方水果下落，顶部补充新水果，可以连锁。
    * - 只有形成消除的交换才消耗 1 步；无效交换会弹回。
    * - 没有任何可消除的交换时，提示“没有可用步数”并自动洗牌。
+   * - 旁边的水果被消除时，炸弹炸掉以自己为中心的 5×5，购物车清掉同种水果。
    * - 步数用完后结束。开局随机填充，但不会带着现成三连开始。
    */
 
@@ -504,6 +723,7 @@
   const COLS = 10;
   const START_MOVES = 30;
   const FRUITS = ['🍎', '🍇', '🍓', '🍊', '🍉', '🍒'];
+  const FRUIT_NAMES = ['苹果', '葡萄', '草莓', '橙子', '西瓜', '樱桃'];
   const SCORE_FRUIT = 10;
   const SCORE_FOUR = 40;
   const SCORE_FIVE = 100;
@@ -520,6 +740,8 @@
   const boardWrap = document.getElementById('board-wrap');
   const floatsEl = document.getElementById('floats');
   const toast = document.getElementById('toast');
+  const feedList = document.getElementById('feed-list');
+  const feedEmpty = document.getElementById('feed-empty');
   const scoreEl = document.getElementById('score');
   const movesEl = document.getElementById('moves');
   const overlay = document.getElementById('overlay');
@@ -528,7 +750,10 @@
 
   let board = [];
   let score = 0;
+  let startMoves = START_MOVES;
   let moves = START_MOVES;
+  let bombChance = 0.005;
+  let cartChance = 0.005;
   let busy = false;
   let gameOver = false;
   let playId = 0;
@@ -538,6 +763,132 @@
   function wait(ms) {
     if (ms <= 0) return Promise.resolve();
     return new Promise((resolve) => { setTimeout(resolve, ms); });
+  }
+
+  let soundOn = true;
+  try {
+    if (localStorage.getItem('fruit-match3-sound') === 'off') soundOn = false;
+  } catch (err) { /* 浏览器可能禁止本地存储 */ }
+
+  let audioCtx = null;
+  let audioOut = null;
+
+  function audio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+      audioOut = audioCtx.createGain();
+      audioOut.gain.value = 0.42;
+      audioOut.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tone(ctx, time, freq, dur, type, peak, slide) {
+    const osc = ctx.createOscillator();
+    const amp = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, time);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, slide), time + dur);
+    amp.gain.setValueAtTime(0.0001, time);
+    amp.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), time + Math.min(0.03, dur * 0.45));
+    amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    osc.connect(amp);
+    amp.connect(audioOut);
+    osc.start(time);
+    osc.stop(time + dur + 0.03);
+  }
+
+  function noise(ctx, time, dur, peak, cutoff, kind, slide) {
+    const length = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = kind || 'lowpass';
+    filter.frequency.setValueAtTime(Math.max(40, cutoff || 420), time);
+    if (slide) filter.frequency.exponentialRampToValueAtTime(Math.max(40, slide), time + dur);
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(Math.max(0.0002, peak), time);
+    amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    src.connect(filter);
+    filter.connect(amp);
+    amp.connect(audioOut);
+    src.start(time);
+    src.stop(time + dur + 0.02);
+  }
+
+  function sfx(name, combo, delay) {
+    if (!soundOn) return;
+    try {
+      const ctx = audio();
+      if (!ctx) return;
+      const t = ctx.currentTime + 0.01 + (delay || 0);
+      const lift = Math.min(1.45, 1 + Math.max(0, (combo || 1) - 1) * 0.08);
+      if (name === 'select') tone(ctx, t, 740, 0.06, 'sine', 0.045);
+      else if (name === 'ui') tone(ctx, t, 880, 0.05, 'sine', 0.04);
+      else if (name === 'swap') {
+        tone(ctx, t, 494, 0.07, 'triangle', 0.05);
+        tone(ctx, t + 0.06, 659, 0.08, 'triangle', 0.05);
+      } else if (name === 'bounce') tone(ctx, t, 220, 0.12, 'sine', 0.05, 140);
+      else if (name === 'shake') tone(ctx, t, 180, 0.07, 'square', 0.03);
+      else if (name === 'clear') {
+        [523, 659, 784].forEach((freq, index) => {
+          tone(ctx, t + index * 0.045, freq * lift, 0.14, 'triangle', 0.055);
+        });
+      } else if (name === 'bomb') {
+        const hits = Math.min(4, Math.max(1, combo || 1));
+        tone(ctx, t, 960, 0.04, 'square', 0.08, 160);
+        noise(ctx, t, 0.08, 0.28, 2200, 'highpass');
+        tone(ctx, t + 0.02, 128, 0.48, 'sine', 0.26, 36);
+        tone(ctx, t + 0.03, 74, 0.4, 'sawtooth', 0.08, 30);
+        noise(ctx, t + 0.04, 0.42, 0.16, 1100, 'lowpass', 120);
+        for (let i = 1; i < hits; i++) {
+          noise(ctx, t + 0.1 + i * 0.07, 0.05, 0.1, 1800, 'bandpass');
+        }
+      } else if (name === 'cart') {
+        const rings = Math.min(3, Math.max(1, combo || 1));
+        noise(ctx, t, 0.2, 0.07, 380, 'bandpass', 2400);
+        [0.03, 0.07, 0.11, 0.15].forEach((at) => {
+          noise(ctx, t + at, 0.025, 0.07, 1600, 'highpass');
+        });
+        for (let i = 0; i < rings; i++) {
+          const at = t + 0.16 + i * 0.11;
+          tone(ctx, at, 1568, 0.16, 'sine', 0.1);
+          tone(ctx, at, 2093, 0.18, 'triangle', 0.055);
+        }
+        tone(ctx, t + 0.18 + rings * 0.08, 2637, 0.24, 'sine', 0.06);
+      } else if (name === 'drop') tone(ctx, t, 320, 0.09, 'sine', 0.03, 180);
+      else if (name === 'shuffle') {
+        [620, 494, 392].forEach((freq, index) => {
+          tone(ctx, t + index * 0.07, freq, 0.09, 'triangle', 0.045);
+        });
+      } else if (name === 'over') {
+        [523, 392, 311].forEach((freq, index) => {
+          tone(ctx, t + index * 0.12, freq, 0.2, 'sine', 0.06);
+        });
+      }
+    } catch (err) { /* 音频不可用时照常游戏 */ }
+  }
+
+  function paintSoundButtons() {
+    const label = soundOn ? '声音开' : '声音关';
+    document.querySelectorAll('.sound-btn').forEach((btn) => {
+      btn.textContent = label;
+      btn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+      btn.classList.toggle('is-off', !soundOn);
+    });
+  }
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    paintSoundButtons();
+    try { localStorage.setItem('fruit-match3-sound', soundOn ? 'on' : 'off'); } catch (err) {}
+    if (soundOn) sfx('ui');
   }
 
   function randomFruit() {
@@ -556,7 +907,7 @@
       let c = 0;
       while (c < COLS) {
         const fruit = bd[r][c];
-        if (fruit == null) {
+        if (typeof fruit !== 'number') {
           c += 1;
           continue;
         }
@@ -574,7 +925,7 @@
       let r = 0;
       while (r < ROWS) {
         const fruit = bd[r][c];
-        if (fruit == null) {
+        if (typeof fruit !== 'number') {
           r += 1;
           continue;
         }
@@ -599,7 +950,7 @@
 
   function lineHasMatch(bd, r, c) {
     const fruit = bd[r][c];
-    if (fruit == null) return false;
+    if (typeof fruit !== 'number') return false;
     let left = c;
     while (left > 0 && bd[r][left - 1] === fruit) left -= 1;
     let right = c;
@@ -629,6 +980,38 @@
     return false;
   }
 
+  function spawnRates() {
+    let bomb = bombChance;
+    let cart = cartChance;
+    const sum = bomb + cart;
+    if (sum > 1) {
+      bomb /= sum;
+      cart /= sum;
+    }
+    return { bomb, cart };
+  }
+
+  function spawnTile() {
+    const rates = spawnRates();
+    const roll = Math.random();
+    if (roll < rates.bomb) return { kind: 'bomb' };
+    if (roll < rates.bomb + rates.cart) return { kind: 'cart', fruit: randomFruit() };
+    return randomFruit();
+  }
+
+  function sprinkle(bd) {
+    const rates = spawnRates();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (typeof bd[r][c] !== 'number') continue;
+        const roll = Math.random();
+        if (roll < rates.bomb) bd[r][c] = { kind: 'bomb' };
+        else if (roll < rates.bomb + rates.cart) bd[r][c] = { kind: 'cart', fruit: bd[r][c] };
+      }
+    }
+    return bd;
+  }
+
   function fillRandom() {
     const bd = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
     for (let r = 0; r < ROWS; r++) {
@@ -648,42 +1031,55 @@
   function generateBoard() {
     let bd = fillRandom();
     for (let attempt = 0; attempt < 200; attempt++) {
-      bd = fillRandom();
+      bd = sprinkle(fillRandom());
       if (findMatches(bd).groups.length === 0 && hasPossibleMove(bd)) return bd;
     }
     return bd;
   }
 
-  function countFruits(source) {
+  function tally(source) {
     const counts = Array(FRUITS.length).fill(0);
+    const specials = [];
     for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) counts[source[r][c]] += 1;
+      for (let c = 0; c < COLS; c++) {
+        const tile = source[r][c];
+        if (typeof tile === 'number') counts[tile] += 1;
+        else if (tile && tile.kind === 'bomb') specials.push({ kind: 'bomb' });
+        else if (tile && tile.kind === 'cart') specials.push({ kind: 'cart', fruit: tile.fruit });
+      }
     }
-    return counts;
+    return { counts, specials };
   }
 
-  function placeFromCounts(base) {
-    const counts = base.slice();
+  function placeMixed(counts, specials) {
+    const pool = [];
+    for (let fruit = 0; fruit < FRUITS.length; fruit++) {
+      for (let i = 0; i < counts[fruit]; i++) pool.push(fruit);
+    }
+    for (const special of specials) pool.push(special);
+    if (pool.length !== ROWS * COLS) return null;
     const bd = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const options = [];
-        for (let fruit = 0; fruit < FRUITS.length; fruit++) {
-          if (counts[fruit] > 0 && !wouldMatch(bd, r, c, fruit)) options.push(fruit);
+        for (let i = 0; i < pool.length; i++) {
+          const item = pool[i];
+          if (typeof item !== 'number' || !wouldMatch(bd, r, c, item)) options.push(i);
         }
         if (!options.length) return null;
-        const fruit = options[Math.floor(Math.random() * options.length)];
-        bd[r][c] = fruit;
-        counts[fruit] -= 1;
+        const pick = options[Math.floor(Math.random() * options.length)];
+        bd[r][c] = pool[pick];
+        pool.splice(pick, 1);
       }
     }
     return bd;
   }
 
   function shuffleBoard(source) {
-    const base = countFruits(source);
+    const bag = tally(source);
     for (let attempt = 0; attempt < 160; attempt++) {
-      const bd = placeFromCounts(base);
+      const specials = bag.specials.map((tile) => ({ kind: tile.kind, fruit: tile.fruit }));
+      const bd = placeMixed(bag.counts.slice(), specials);
       if (bd && findMatches(bd).groups.length === 0 && hasPossibleMove(bd)) return bd;
     }
     return null;
@@ -710,7 +1106,7 @@
       }
       const missing = ROWS - stack.length;
       for (let i = 0; i < missing; i++) {
-        stack.push({ fruit: randomFruit(), fromR: -1 - i });
+        stack.push({ fruit: spawnTile(), fromR: -1 - i });
       }
       for (let r = ROWS - 1; r >= 0; r--) {
         const item = stack[ROWS - 1 - r];
@@ -784,16 +1180,30 @@
   }
 
   function createCell(r, c) {
-    const fruitIndex = board[r][c];
+    const tile = board[r][c];
     const cell = document.createElement('div');
-    cell.className = 'cell' + ((r + c) % 2 ? ' alt' : '');
+    cell.className = 'cell';
     if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
     cell.dataset.r = String(r);
     cell.dataset.c = String(c);
-    cell.dataset.fruit = String(fruitIndex);
     const fruit = document.createElement('div');
     fruit.className = 'piece fruit';
-    fruit.textContent = fruitIndex == null ? '' : FRUITS[fruitIndex];
+    if (tile && tile.kind === 'bomb') {
+      cell.classList.add('bomb');
+      cell.dataset.fruit = 'bomb';
+      fruit.textContent = '💣';
+    } else if (tile && tile.kind === 'cart') {
+      cell.classList.add('cart');
+      cell.dataset.fruit = 'cart';
+      fruit.textContent = '🛒';
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = FRUITS[tile.fruit] || '';
+      fruit.appendChild(badge);
+    } else {
+      cell.dataset.fruit = String(tile);
+      fruit.textContent = tile == null ? '' : FRUITS[tile];
+    }
     cell.appendChild(fruit);
     return cell;
   }
@@ -828,6 +1238,7 @@
     selected = { r: pos.r, c: pos.c };
     const cell = cellAt(pos.r, pos.c);
     if (cell) cell.classList.add('selected');
+    sfx('select');
   }
 
   function clearHints() {
@@ -994,23 +1405,132 @@
         fruit.classList.add('pop');
         fruit.style.animationDuration = T.pop + 'ms';
       }
-      spawnFloater(label.cells, label.pts, label.combo);
+      if (label.cells.length && label.pts > 0) spawnFloater(label.cells, label.pts, label.combo);
     }
   }
 
-  function clearMatched(groups) {
-    const seen = new Set();
-    for (const cells of groups) {
-      for (const [r, c] of cells) {
-        const key = r + ',' + c;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        board[r][c] = null;
+  function cellKey(r, c) {
+    return r + ',' + c;
+  }
+
+  function neighbors8(r, c) {
+    const list = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const rr = r + dr;
+        const cc = c + dc;
+        if (rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS) list.push([rr, cc]);
       }
+    }
+    return list;
+  }
+
+  function expandSpecials(bd, seedKeys) {
+    const doomed = new Set(seedKeys);
+    const cause = new Map();
+    const triggered = new Set();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const key = cellKey(r, c);
+          if (triggered.has(key)) continue;
+          const tile = bd[r][c];
+          if (!tile || typeof tile === 'number') continue;
+          const alreadyDoomed = doomed.has(key);
+          const types = new Set();
+          let fruitHit = false;
+          for (const [nr, nc] of neighbors8(r, c)) {
+            if (!doomed.has(cellKey(nr, nc))) continue;
+            const neighbor = bd[nr][nc];
+            if (typeof neighbor === 'number') {
+              fruitHit = true;
+              types.add(neighbor);
+            }
+          }
+          if (!fruitHit && !alreadyDoomed) continue;
+          triggered.add(key);
+          if (!doomed.has(key)) doomed.add(key);
+          changed = true;
+          if (tile.kind === 'bomb') {
+            for (let rr = r - 2; rr <= r + 2; rr++) {
+              for (let cc = c - 2; cc <= c + 2; cc++) {
+                if (rr < 0 || cc < 0 || rr >= ROWS || cc >= COLS) continue;
+                const blast = cellKey(rr, cc);
+                if (!doomed.has(blast)) {
+                  doomed.add(blast);
+                  cause.set(blast, 'bomb');
+                  changed = true;
+                }
+              }
+            }
+          } else if (tile.kind === 'cart') {
+            const clearTypes = new Set(types);
+            if (typeof tile.fruit === 'number') clearTypes.add(tile.fruit);
+            for (let rr = 0; rr < ROWS; rr++) {
+              for (let cc = 0; cc < COLS; cc++) {
+                const other = bd[rr][cc];
+                if (typeof other === 'number' && clearTypes.has(other)) {
+                  const target = cellKey(rr, cc);
+                  if (!doomed.has(target)) {
+                    doomed.add(target);
+                    cause.set(target, 'cart');
+                    changed = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return { doomed, cause };
+  }
+
+  function clearFeed() {
+    feedList.replaceChildren();
+    feedEmpty.hidden = false;
+  }
+
+  function pushFeed(entries) {
+    const fresh = entries.filter((entry) => entry.pts > 0);
+    if (!fresh.length) return;
+    const frag = document.createDocumentFragment();
+    for (const entry of fresh) {
+      const item = document.createElement('li');
+      item.className = 'feed-item';
+      const card = document.createElement('span');
+      card.className = 'feed-card';
+      card.textContent = entry.card;
+      const meta = document.createElement('span');
+      meta.className = 'feed-meta';
+      meta.textContent = entry.detail;
+      const pts = document.createElement('b');
+      pts.textContent = '+' + formatScore(entry.pts);
+      item.append(card, pts, meta);
+      frag.appendChild(item);
+    }
+    feedList.prepend(frag);
+    while (feedList.children.length > 40) feedList.lastElementChild.remove();
+    feedEmpty.hidden = true;
+    feedList.scrollTop = 0;
+  }
+
+  function fruitLabel(fruit) {
+    return FRUITS[fruit] + ' ' + FRUIT_NAMES[fruit];
+  }
+
+  function clearKeys(keys) {
+    for (const key of keys) {
+      const parts = key.split(',');
+      board[Number(parts[0])][Number(parts[1])] = null;
     }
   }
 
   async function animateFalls(motions) {
+    if (motions.some((motion) => motion.dy > 0)) sfx('drop');
     if (T.fall <= 0) return;
     const stride = rowStride();
     if (!stride) return;
@@ -1038,7 +1558,8 @@
 
   function showGameOver() {
     gameOver = true;
-    overReasonEl.textContent = START_MOVES + ' 步已用完';
+    sfx('over');
+    overReasonEl.textContent = startMoves + ' 步已用完';
     finalScoreEl.textContent = formatScore(score);
     overlay.hidden = false;
     overlay.setAttribute('aria-hidden', 'false');
@@ -1046,6 +1567,7 @@
   }
 
   async function noMovesReshuffle(id) {
+    sfx('shuffle');
     showToast('没有可用步数');
     await wait(T.read);
     if (playId !== id) {
@@ -1069,13 +1591,78 @@
     while (playId === id) {
       const { groups } = findMatches(board);
       if (!groups.length) break;
+      const matchedKeys = new Set();
+      for (const cells of groups) {
+        for (const [r, c] of cells) matchedKeys.add(cellKey(r, c));
+      }
+      const expanded = expandSpecials(board, matchedKeys);
+      const doomed = expanded.doomed;
+      const cause = expanded.cause;
       const result = award(groups, combo);
+      const extraCells = [];
+      let extraPts = 0;
+      let bombPts = 0;
+      let cartPts = 0;
+      const cartTypes = [];
+      for (const key of doomed) {
+        if (matchedKeys.has(key)) continue;
+        const parts = key.split(',');
+        const r = Number(parts[0]);
+        const c = Number(parts[1]);
+        extraCells.push([r, c]);
+        if (typeof board[r][c] !== 'number') continue;
+        const pts = SCORE_FRUIT * combo;
+        extraPts += pts;
+        if (cause.get(key) === 'cart') {
+          cartPts += pts;
+          if (!cartTypes.includes(board[r][c])) cartTypes.push(board[r][c]);
+        } else {
+          bombPts += pts;
+        }
+      }
+      if (extraCells.length) {
+        result.labels.push({ cells: extraCells, pts: extraPts, combo });
+        result.total += extraPts;
+      }
       score += result.total;
       updateHUD(true, false);
+      const feedEntries = [];
+      for (let i = 0; i < groups.length; i++) {
+        const cells = groups[i];
+        const fruit = board[cells[0][0]][cells[0][1]];
+        feedEntries.push({
+          card: fruitLabel(fruit),
+          detail: cells.length + '连 · ' + combo + '连击',
+          pts: result.labels[i].pts,
+        });
+      }
+      if (bombPts > 0) {
+        feedEntries.push({ card: '💣 炸弹', detail: combo + '连击', pts: bombPts });
+      }
+      if (cartPts > 0) {
+        const kinds = cartTypes.map((fruit) => FRUIT_NAMES[fruit]).join('、');
+        feedEntries.push({
+          card: '🛒 购物车',
+          detail: (kinds ? '清掉' + kinds + ' · ' : '') + combo + '连击',
+          pts: cartPts,
+        });
+      }
+      pushFeed(feedEntries);
       paintPop(result.labels);
+      let bombCount = 0;
+      let cartCount = 0;
+      for (const key of doomed) {
+        const parts = key.split(',');
+        const tile = board[Number(parts[0])][Number(parts[1])];
+        if (tile && tile.kind === 'bomb') bombCount += 1;
+        else if (tile && tile.kind === 'cart') cartCount += 1;
+      }
+      sfx('clear', combo);
+      if (bombCount) sfx('bomb', bombCount, 0.1);
+      if (cartCount) sfx('cart', cartCount, bombCount ? 0.46 : 0.1);
       await wait(T.pop);
       if (playId !== id) return;
-      clearMatched(groups);
+      clearKeys(doomed);
       const motions = applyGravity(board);
       renderBoard();
       await animateFalls(motions);
@@ -1097,17 +1684,20 @@
     if (board[a.r][a.c] === board[b.r][b.c]) {
       shake(a.r, a.c);
       shake(b.r, b.c);
+      sfx('shake');
       return;
     }
     setBusy(true);
     clearSelection();
     try {
+      sfx('swap');
       await animateSwap(a, b);
       if (playId !== id) return;
       swapOn(board, a.r, a.c, b.r, b.c);
       const matched = findMatches(board).groups.length > 0;
       if (!matched) {
         swapOn(board, a.r, a.c, b.r, b.c);
+        sfx('bounce');
         await animateSwapBack(a, b);
         return;
       }
@@ -1199,13 +1789,14 @@
   function startGame() {
     playId += 1;
     score = 0;
-    moves = START_MOVES;
+    moves = startMoves;
     gameOver = false;
     selected = null;
     drag = null;
     boardEl.classList.remove('dragging');
     board = makePlayable(null);
     floatsEl.replaceChildren();
+    clearFeed();
     hideToast();
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
@@ -1222,8 +1813,71 @@
     }
   }
 
-  document.getElementById('btn-restart').addEventListener('click', startGame);
-  document.getElementById('btn-again').addEventListener('click', startGame);
+  const settingsEl = document.getElementById('settings');
+  const setMoves = document.getElementById('set-moves');
+  const setBomb = document.getElementById('set-bomb');
+  const setCart = document.getElementById('set-cart');
+
+  function percentText(chance) {
+    return String(Math.round(chance * 1000) / 10);
+  }
+
+  function openSettings() {
+    sfx('ui');
+    setMoves.value = String(moves);
+    setBomb.value = percentText(bombChance);
+    setCart.value = percentText(cartChance);
+    settingsEl.hidden = false;
+    settingsEl.setAttribute('aria-hidden', 'false');
+    setMoves.focus();
+  }
+
+  function closeSettings() {
+    settingsEl.hidden = true;
+    settingsEl.setAttribute('aria-hidden', 'true');
+  }
+
+  function clampPercent(input) {
+    const value = Number(input.value);
+    if (!Number.isFinite(value)) return 0;
+    return Math.min(100, Math.max(0, value)) / 100;
+  }
+
+  function applySettings(event) {
+    event.preventDefault();
+    sfx('ui');
+    const nextMoves = Math.round(Number(setMoves.value));
+    if (!Number.isFinite(nextMoves) || nextMoves < 1 || nextMoves > 999) return;
+    startMoves = nextMoves;
+    moves = nextMoves;
+    bombChance = clampPercent(setBomb);
+    cartChance = clampPercent(setCart);
+    if (gameOver && moves > 0) {
+      gameOver = false;
+      overlay.hidden = true;
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    updateHUD(false, true);
+    closeSettings();
+    if (!gameOver && !busy && moves > 0 && findMatches(board).groups.length === 0 && !hasPossibleMove(board)) {
+      const id = playId;
+      setBusy(true);
+      noMovesReshuffle(id).finally(() => {
+        if (playId === id) setBusy(false);
+      });
+    }
+  }
+
+  document.querySelectorAll('.sound-btn').forEach((btn) => {
+    btn.addEventListener('click', toggleSound);
+  });
+  paintSoundButtons();
+  document.getElementById('btn-restart').addEventListener('click', () => { sfx('ui'); startGame(); });
+  document.getElementById('btn-again').addEventListener('click', () => { sfx('ui'); startGame(); });
+  document.getElementById('btn-custom').addEventListener('click', openSettings);
+  document.getElementById('btn-custom-over').addEventListener('click', openSettings);
+  document.getElementById('set-cancel').addEventListener('click', () => { sfx('ui'); closeSettings(); });
+  document.getElementById('settings-form').addEventListener('submit', applySettings);
   boardEl.addEventListener('pointerdown', onPointerDown, { passive: false });
   boardEl.addEventListener('pointermove', onPointerMove);
   boardEl.addEventListener('pointerup', onPointerUp);

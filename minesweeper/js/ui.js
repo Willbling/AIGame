@@ -35,6 +35,7 @@ MS.ui = {
     document.getElementById('resultReset').addEventListener('click', () => this.resetRecord());
     document.getElementById('resetRecordBtn').addEventListener('click', () => this.resetRecord());
     document.getElementById('cheatBtn').addEventListener('click', () => this.toggleCheat());
+    document.getElementById('soundBtn').addEventListener('click', () => this.toggleSound());
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       if (!document.getElementById('customModal').hidden) this.closeCustom();
@@ -62,7 +63,22 @@ MS.ui = {
     this.paintTimer();
     this.paintBest();
     this.paintCheat();
+    this.paintFace();
+    this.paintSound();
     MS.game.paintMines();
+  },
+
+  paintSound() {
+    const btn = document.getElementById('soundBtn');
+    const on = MS.sound.enabled;
+    btn.classList.toggle('is-on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.textContent = on ? '声音开' : '声音关';
+  },
+
+  toggleSound() {
+    MS.sound.toggle();
+    this.paintSound();
   },
 
   paintCheat() {
@@ -70,6 +86,22 @@ MS.ui = {
     const on = MS.state.cheat;
     btn.classList.toggle('is-on', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    document.getElementById('cheatNote').hidden = !MS.state.cheatEver;
+    this.paintFace();
+  },
+
+  cheatFaceSvg: '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="40" r="18" fill="#ffe14a"/><path d="M14 33c1-14 8-20 18-20s17 6 18 20" fill="#55643a"/><path d="M8 33h48c-1 6-10 9-24 9S9 39 8 33z" fill="#3d4a2b"/><rect x="28" y="16" width="8" height="3.5" rx="1" fill="#d4b46a"/><rect x="17" y="35" width="12" height="7" rx="1.5" fill="#1c1c1c"/><rect x="35" y="35" width="12" height="7" rx="1.5" fill="#1c1c1c"/><rect x="28" y="37" width="8" height="2.5" fill="#1c1c1c"/><path d="M24 48c2.6 3.4 13.4 3.4 16 0" fill="none" stroke="#6a4a10" stroke-width="2" stroke-linecap="round"/><g transform="rotate(18 46 49)"><rect x="40" y="47" width="14" height="3" rx="1" fill="#f6f1e6"/><rect x="53" y="47" width="3.2" height="3" rx="0.6" fill="#ff6428"/></g></svg>',
+
+  paintFace() {
+    const btn = document.getElementById('faceBtn');
+    const state = MS.state;
+    if (state.cheat) {
+      btn.classList.add('cheat-face');
+      btn.innerHTML = this.cheatFaceSvg;
+      return;
+    }
+    btn.classList.remove('cheat-face');
+    btn.textContent = state.gameWon ? '😎' : state.gameOver ? '😵' : '🙂';
   },
 
   toggleCheat() {
